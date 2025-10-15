@@ -1,0 +1,109 @@
+version: '3.8'
+
+services:
+  # Main HereSphere Stash Bridge application
+  heresphere-stash-bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: heresphere-stash-bridge
+    ports:
+      - "${BRIDGE_PORT:-5000}:5000"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=true
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
+      - HERESPHERE_HOST=${HERESPHERE_HOST:-heresphere-mock}
+      - HERESPHERE_PORT=${HERESPHERE_PORT:-8080}
+      - STASH_HOST=${STASH_HOST:-stash-mock}
+      - STASH_PORT=${STASH_PORT:-9999}
+      - STASH_API_KEY=${STASH_API_KEY:-dev-api-key}
+      - BRIDGE_HOST=0.0.0.0
+      - BRIDGE_PORT=5000
+    volumes:
+      # Mount source code for development (comment out for production)
+      - ./src:/app/src
+      - ./config:/app/config
+    depends_on:
+      - heresphere-mock
+      - stash-mock
+    networks:
+      - bridge-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Mock HereSphere service for development
+  heresphere-mock:
+    image: wiremock/wiremock:latest
+    container_name: heresphere-mock
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./docker/wiremock/heresphere:/home/wiremock
+    command: 
+      - --global-response-templating
+      - --verbose
+    networks:
+      - bridge-network
+    restart: unless-stopped
+
+  # Mock Stash service for development
+  stash-mock:
+    image: wiremock/wiremock:latest
+    container_name: stash-mock
+    ports:
+      - "9999:8080"
+    volumes:
+      - ./docker/wiremock/stash:/home/wiremock
+    command:
+      - --global-response-templating
+      - --verbose
+      - --port
+      - "8080"
+    networks:
+      - bridge-network
+    restart: unless-stopped
+
+  # Redis for caching (optional, for future use)
+  redis:
+    image: redis:7-alpine
+    container_name: heresphere-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - bridge-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # Nginx reverse proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: heresphere-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - heresphere-stash-bridge
+    networks:
+      - bridge-network
+    restart: unless-stopped
+
+networks:
+  bridge-network:
+    driver: bridge
+    name: heresphere-bridge-network
+
+volumes:
+  redis_data:
+    driver: local

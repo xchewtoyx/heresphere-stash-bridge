@@ -1,0 +1,118 @@
+name: Code Quality & Security
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run daily at 3 AM UTC
+    - cron: '0 3 * * *'
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-dev.txt
+        pip install -e .
+        
+    - name: Run comprehensive linting
+      run: |
+        echo "::group::Flake8 Results"
+        flake8 src/ tests/ --format=github
+        echo "::endgroup::"
+        
+        echo "::group::Black Results"
+        black --check --diff src/ tests/
+        echo "::endgroup::"
+        
+        echo "::group::isort Results" 
+        isort --check-only --diff src/ tests/
+        echo "::endgroup::"
+        
+        echo "::group::MyPy Results"
+        mypy src/ --show-error-codes --pretty
+        echo "::endgroup::"
+
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+        
+    - name: Install security tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install safety bandit semgrep
+        pip install -r requirements.txt
+        
+    - name: Run Safety check
+      run: |
+        echo "::group::Safety - Vulnerability Check"
+        safety check --json --output safety-report.json || true
+        safety check || echo "::warning::Vulnerabilities found in dependencies"
+        echo "::endgroup::"
+        
+    - name: Run Bandit security check
+      run: |
+        echo "::group::Bandit - Static Security Analysis"
+        bandit -r src/ -f json -o bandit-report.json || true
+        bandit -r src/ || echo "::warning::Security issues found"
+        echo "::endgroup::"
+        
+    - name: Run Semgrep security scan
+      run: |
+        echo "::group::Semgrep - Advanced Security Scan"
+        semgrep --config=auto src/ --json --output=semgrep-report.json || true
+        semgrep --config=auto src/ || echo "::warning::Security patterns detected"
+        echo "::endgroup::"
+        
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          safety-report.json
+          bandit-report.json
+          semgrep-report.json
+
+  docker-security:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Build Docker image for security scan
+      run: |
+        docker build -t heresphere-stash-bridge:security-scan .
+        
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'heresphere-stash-bridge:security-scan'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'

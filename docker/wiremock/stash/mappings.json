@@ -1,0 +1,113 @@
+{
+  "mappings": [
+    {
+      "request": {
+        "method": "POST",
+        "urlPattern": "/graphql",
+        "bodyPatterns": [
+          {
+            "contains": "findScenes"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "data": {
+            "findScenes": {
+              "count": 2,
+              "scenes": [
+                {
+                  "id": "1",
+                  "title": "Mock Scene 1",
+                  "path": "/scenes/scene1.mp4",
+                  "duration": 1800,
+                  "tags": [
+                    {
+                      "id": "1",
+                      "name": "vr"
+                    },
+                    {
+                      "id": "2", 
+                      "name": "sample"
+                    }
+                  ]
+                },
+                {
+                  "id": "2",
+                  "title": "Mock Scene 2", 
+                  "path": "/scenes/scene2.mp4",
+                  "duration": 2400,
+                  "tags": [
+                    {
+                      "id": "1",
+                      "name": "vr"
+                    },
+                    {
+                      "id": "3",
+                      "name": "demo"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPattern": "/graphql",
+        "bodyPatterns": [
+          {
+            "contains": "__schema"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "data": {
+            "__schema": {
+              "types": [
+                {
+                  "name": "Scene",
+                  "fields": [
+                    {"name": "id"},
+                    {"name": "title"},
+                    {"name": "path"},
+                    {"name": "duration"}
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPattern": "/api/version"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "version": "0.24.0",
+          "build_time": "2024-01-01T00:00:00Z",
+          "build_hash": "mock-hash"
+        }
+      }
+    }
+  ]
+}

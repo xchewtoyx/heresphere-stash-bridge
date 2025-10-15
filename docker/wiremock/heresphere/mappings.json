@@ -1,0 +1,55 @@
+{
+  "mappings": [
+    {
+      "request": {
+        "method": "GET",
+        "urlPattern": "/api/library.*"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "library": {
+            "name": "HereSphere Mock Library",
+            "version": "1.0.0",
+            "items": [
+              {
+                "id": "mock-video-1",
+                "title": "Sample VR Video 1",
+                "path": "/videos/sample1.mp4",
+                "duration": 1800,
+                "tags": ["vr", "sample"]
+              },
+              {
+                "id": "mock-video-2", 
+                "title": "Sample VR Video 2",
+                "path": "/videos/sample2.mp4",
+                "duration": 2400,
+                "tags": ["vr", "sample", "demo"]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPattern": "/api/status"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "status": "running",
+          "service": "HereSphere Mock",
+          "version": "1.0.0"
+        }
+      }
+    }
+  ]
+}
