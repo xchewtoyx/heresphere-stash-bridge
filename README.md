@@ -111,14 +111,31 @@ The project uses several tools for code quality:
 - **isort**: Import sorting
 - **mypy**: Type checking
 
-Run all quality checks:
+Run all quality checks locally (same as GitHub Actions):
 
+```bash
+# Run all checks (recommended before commit)
+./scripts/check-code.sh
+
+# Auto-fix formatting issues
+./scripts/format-code.sh
+
+# Security scanning
+./scripts/security-scan.sh
+
+# Install pre-commit hooks
+./scripts/install-hooks.sh
+```
+
+Individual tools:
 ```bash
 black src/ tests/
 isort src/ tests/
 flake8 src/ tests/
 mypy src/
 ```
+
+See [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md) for detailed testing guide.
 
 ### Project Structure
 

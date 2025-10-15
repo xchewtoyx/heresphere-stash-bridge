@@ -1,13 +1,14 @@
 """Test configuration and fixtures."""
 
 import pytest
+
 from heresphere_stash_bridge import create_app
 
 
 @pytest.fixture
 def app():
     """Create application for testing."""
-    app = create_app('testing')
+    app = create_app("testing")
     return app
 
 
